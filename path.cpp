@@ -47,3 +47,10 @@ int main(int argc, char* argv[1])
     cv::waitKey(0);
     return 0;
 }
+
+cv::Point findMiddle(cv::Point topl, cv::Point topr, cv::Point botl)
+{
+
+  return cv::Point((topl.x+topr.x)/2, (topl.y+botl.y)/2);
+
+}
