@@ -1,8 +1,10 @@
-#include<iostream>
+#include "outliers.hpp"
 
-#include<opencv2/imgcodecs.hpp>
-#include<opencv2/highgui.hpp>
-#include<opencv2/imgproc.hpp>
+#include <iostream>
+
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/highgui.hpp>
+#include <opencv2/imgproc.hpp>
 
 int main(int argc, char* argv[1])
 {
@@ -19,7 +21,7 @@ int main(int argc, char* argv[1])
         return -1;
     }
     // displays original image
-    cv::namedWindow("original", cv::WINDOW_NORMAL);
+    cv::namedWindow("original", cv::WINDOW_AUTOSIZE);
     cv::imshow("original", img);
 
     // runs thresholding on the image to isolate orange
@@ -41,9 +43,22 @@ int main(int argc, char* argv[1])
         line(lineImg, cv::Point(l[0], l[1]), cv::Point(l[2], l[3]), cv::Scalar(0,0,255), 3, CV_AA);
     }
     // displays img with detected lines
-    cv::namedWindow("detected lines", cv::WINDOW_NORMAL);
+    cv::namedWindow("detected lines", cv::WINDOW_AUTOSIZE);
     cv::imshow("detected lines", lineImg);
+
+    eliminateOutliers(lines);
+
+    cv::Mat lineImg2;
+    cv::cvtColor(img, lineImg2, cv::COLOR_GRAY2BGR);
+    for (int i = 0; i < lines.size(); i++) // drawing lines
+    {
+        cv::Vec4i l = lines[i];
+        line(lineImg2, cv::Point(l[0], l[1]), cv::Point(l[2], l[3]), cv::Scalar(0,0,255), 3, CV_AA);
+    }
+    cv::namedWindow("path", cv::WINDOW_AUTOSIZE);
+    cv::imshow("path", lineImg);
 
     cv::waitKey(0);
     return 0;
 }
+
