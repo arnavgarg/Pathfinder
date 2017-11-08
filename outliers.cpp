@@ -1,6 +1,16 @@
 #include "outliers.hpp"
 
-#include <iostream>
+#include <stdio.h>
+
+class node
+{
+public:
+    int line;
+    int group;
+    node* next = nullptr;
+
+    node(int line) : line(line) {}
+};
 
 bool intersects(cv::Vec4i l1, cv::Vec4i l2);
 int orientation(int x1, int y1, int x2, int y2, int x3, int y3);
@@ -20,9 +30,11 @@ void eliminateOutliers(std::vector<cv::Vec4i> &lines)
 
     // adds an edge between ever pair of lines that intersect
     for (int i = 0; i < lines.size(); i++)
-        for (int j = i+1; j < lines.size(); j++)
-            if (intersects(lines[i], lines[j]))
+        for (int j = i+1; j < lines.size(); j++) {
+            if (intersects(lines[i], lines[j])) {
                 addEdge(graph, i, j);
+            }
+        }
 
     // uses a floodfill to divide the graph into groups
     bool visited[graph.size()];
@@ -64,13 +76,13 @@ void eliminateOutliers(std::vector<cv::Vec4i> &lines)
 void addEdge(std::vector<node*> &graph, int i, int j)
 {
     node* inode = graph[i];
-    while (inode->next) {
+    while (inode->next != nullptr) {
         inode = inode->next;
     }
     inode->next = new node(j);
 
     node* jnode = graph[j];
-    while (jnode->next)
+    while (jnode->next != nullptr)
         jnode = jnode->next;
     jnode->next = new node(i);
 }
@@ -83,10 +95,10 @@ bool intersects(cv::Vec4i l1, cv::Vec4i l2) {
     int o2 = orientation(l1[0], l1[1], l2[0], l2[1], l2[2], l2[3]); // p1 q1 q2
     int o3 = orientation(l1[2], l1[3], l2[2], l2[3], l1[0], l1[1]); // p1 q1 p1
     int o4 = orientation(l1[2], l1[3], l2[2], l2[3], l2[0], l2[1]); // p2 q2 q1
-    std::cout << "test1" << std::endl;
 
-    if (o1 != o2 && o3 != o4)
+    if (o1 != o2 && o3 != o4) {
         return true;
+    }
     return false;
 }
 
@@ -98,6 +110,9 @@ bool intersects(cv::Vec4i l1, cv::Vec4i l2) {
  */
 int orientation(int x1, int y1, int x2, int y2, int x3, int y3)
 {
+    // ensures we're not dividing by 0
+    x1 += x1 == x2 ? 1 : 0;
+    x3 += x3 == x2 ? 1 : 0;
     double slope1 = (y1 - y2)/(x1 - x2);
     double slope2 = (y2 - y3)/(x2 - x3);
     if (slope1 == slope2)
