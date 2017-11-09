@@ -60,7 +60,7 @@ void eliminateOutliers(std::vector<cv::Vec4i> &lines)
         if (groups[i] > groups[max])
             max = i;
 
-//     erases all lines that are not part of biggest group
+    // erases all lines that are not part of biggest group
     for (int i = graph.size()-1; i >= 0; i--)
         if (graph[i]->group != max)
             lines.erase(lines.begin() + i);
