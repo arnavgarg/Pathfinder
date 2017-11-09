@@ -1,9 +1,11 @@
-#include<iostream>
-#include<vector>
+#include <iostream>
 #include<algorithm>
-#include<opencv2/imgcodecs.hpp>
-#include<opencv2/highgui.hpp>
-#include<opencv2/imgproc.hpp>
+
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/highgui.hpp>
+#include <opencv2/imgproc.hpp>
+
+void eliminateOutliers(std::vector<cv::Vec4i> &lines);
 
 class Rectangle
 {
@@ -60,9 +62,6 @@ int main(int argc, char* argv[1])
         std::cout << "no image data found\n" << std::endl;
         return -1;
     }
-    // displays original image
-    cv::namedWindow("original", cv::WINDOW_NORMAL);
-    cv::imshow("original", img);
 
     // runs thresholding on the image to isolate orange
     cv::inRange(img, cv::Scalar(115, 170, 240), cv::Scalar(190, 255, 255), img);
@@ -71,17 +70,9 @@ int main(int argc, char* argv[1])
     cv::blur(img, img, cv::Size(3, 3));
     cv::Canny(img, img, 50, 150);
 
-    // creates an image to draw the lines on
-    cv::Mat lineImg;
-    cv::cvtColor(img, lineImg, cv::COLOR_GRAY2BGR);
     // finds all lines in image
     std::vector<cv::Vec4i> lines;
     cv::HoughLinesP(img, lines, 1, CV_PI/180, 25, 30, 10);
-    for (int i = 0; i < lines.size(); i++) // drawing lines
-    {
-        cv::Vec4i l = lines[i];
-        line(lineImg, cv::Point(l[0], l[1]), cv::Point(l[2], l[3]), cv::Scalar(0,0,255), 3, CV_AA);
-    }
 
     double xvalues[(lines.size())*2];
     double yvalues[(lines.size())*2];
@@ -115,12 +106,14 @@ int main(int argc, char* argv[1])
     rect.setValues(maxy-miny, maxx-minx, topleft);
     cv::Point middle = rect.findMiddle();
 
+    // eliminates the outliers and finds the confidence value
+    double total = lines.size();
+    eliminateOutliers(lines);
+    double confidence = lines.size() / total;
+
+    // outputs
     std::cout << middle.x << " ," << middle.y;
-
-    // displays img with detected lines
-    cv::namedWindow("detected lines", cv::WINDOW_NORMAL);
-    cv::imshow("detected lines", lineImg);
-
-    cv::waitKey(0);
+    std::cout << "confidence: " << confidence  << std::endl;
     return 0;
 }
+
