@@ -1,6 +1,7 @@
-#include "outliers.hpp"
+#include <vector>
+#include <cstdio>
 
-#include <stdio.h>
+#include <opencv2/core.hpp>
 
 class node
 {
@@ -16,7 +17,7 @@ bool intersects(cv::Vec4i l1, cv::Vec4i l2);
 int orientation(int x1, int y1, int x2, int y2, int x3, int y3);
 void addEdge(std::vector<node*> &graph, int i, int j);
 void floodfill(std::vector<node*> &graph, int line, bool visited[], int group);
-void dealocGraph(std::vector<node*> &graph);
+void dealocgraph(std::vector<node*> &graph);
 
 /*
  * given a vector of lines, remove all lines that are not part of the biggest "clump"
@@ -30,11 +31,9 @@ void eliminateOutliers(std::vector<cv::Vec4i> &lines)
 
     // adds an edge between ever pair of lines that intersect
     for (int i = 0; i < lines.size(); i++)
-        for (int j = i+1; j < lines.size(); j++) {
-            if (intersects(lines[i], lines[j])) {
+        for (int j = i+1; j < lines.size(); j++)
+            if (intersects(lines[i], lines[j]))
                 addEdge(graph, i, j);
-            }
-        }
 
     // uses a floodfill to divide the graph into groups
     bool visited[graph.size()];
@@ -58,16 +57,19 @@ void eliminateOutliers(std::vector<cv::Vec4i> &lines)
         if (groups[i] > groups[max])
             max = i;
 
-    // erases all lines that are not part of biggest group
+    for (int i = 0; i < group; i++)
+        printf("%d %d\n", i, groups[i]);
+    printf("\n\n\n");
+    for (int i = 0; i < graph.size(); i++)
+        printf("%d %d\n", graph[i]->line, graph[i]->group);
+    printf("%d\n", max);
+//     erases all lines that are not part of biggest group
     for (int i = graph.size()-1; i >= 0; i--)
-    {
         if (graph[i]->group != max)
             lines.erase(lines.begin() + i);
-    }
-
 
     // deallocate graph memory
-    dealocGraph(graph);
+    dealocgraph(graph);
 }
 
 /*
@@ -76,9 +78,8 @@ void eliminateOutliers(std::vector<cv::Vec4i> &lines)
 void addEdge(std::vector<node*> &graph, int i, int j)
 {
     node* inode = graph[i];
-    while (inode->next != nullptr) {
+    while (inode->next != nullptr)
         inode = inode->next;
-    }
     inode->next = new node(j);
 
     node* jnode = graph[j];
@@ -95,16 +96,11 @@ bool intersects(cv::Vec4i l1, cv::Vec4i l2) {
     int o2 = orientation(l1[0], l1[1], l2[0], l2[1], l2[2], l2[3]); // p1 q1 q2
     int o3 = orientation(l1[2], l1[3], l2[2], l2[3], l1[0], l1[1]); // p1 q1 p1
     int o4 = orientation(l1[2], l1[3], l2[2], l2[3], l2[0], l2[1]); // p2 q2 q1
-
-    if (o1 != o2 && o3 != o4) {
-        return true;
-    }
-    return false;
+    return o2 != o1 && o3 != o4;
 }
 
 /*
  * returns orientation of 3 points given x and y coordinates
- * 0 - co-linear
  * 1 - clockwise
  * 2 - counterclockwise
  */
@@ -115,8 +111,6 @@ int orientation(int x1, int y1, int x2, int y2, int x3, int y3)
     x3 += x3 == x2 ? 1 : 0;
     double slope1 = (y1 - y2)/(x1 - x2);
     double slope2 = (y2 - y3)/(x2 - x3);
-    if (slope1 == slope2)
-        return 0;
     return slope1 > slope2 ? 1 : 2;
 }
 
@@ -138,7 +132,7 @@ void floodfill(std::vector<node*> &graph, int line, bool visited[], int group)
 /*
  * dealocated all memory in graph
  */
-void dealocGraph(std::vector<node*> &graph)
+void dealocgraph(std::vector<node*> &graph)
 {
     for (int i = 0; i < graph.size(); i++)
     {
