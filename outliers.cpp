@@ -26,7 +26,7 @@ void dealocGraph(std::vector<node*> &graph);
  */
 void eliminateOutliers(std::vector<cv::Vec4i> &lines)
 {
-    // creates a graph with a node for every line
+    // creates a graph with a vertice for every line
     std::vector<node*> graph = std::vector<node*>(lines.size());
     for (int i = 0; i < graph.size(); i++)
         graph[i] = new node(i);
@@ -94,7 +94,17 @@ bool closeEnough(cv::Vec4i l1, cv::Vec4i l2)
     double d2 = sqrt(pow(l1[0]-l2[2], 2) + pow(l1[1]-l2[4], 2));
     double d3 = sqrt(pow(l1[2]-l2[0], 2) + pow(l1[3]-l2[1], 2));
     double d4 = sqrt(pow(l1[2]-l2[2], 2) + pow(l1[3]-l2[3], 2));
-    return d1 < 5 || d2 < 5 || d3 < 5 || d4 < 5;
+
+    // ensures we're not dividing by 0
+    l1[0] += l1[0] == l1[2] ? 1 : 0;
+    l2[0] += l2[0] == l2[2] ? 1 : 0;
+    // if the lines are approximetly parallel, allow for further distance
+    double s1 = (l1[1]-l1[3])/(l1[0]-l1[2]);
+    double s2 = (l2[1]-l2[3])/(l2[0]-l2[2]);
+    if (s1 * 0.9 > s2 && s1 * 1.1 < s2)
+        return d1 < 12 || d2 < 12 || d3 < 12 || d4 < 12;
+
+    return d1 < 7 || d2 < 7 || d3 < 7 || d4 < 7;
 }
 
 /*
@@ -149,7 +159,7 @@ void dealocGraph(std::vector<node*> &graph)
     for (int i = 0; i < graph.size(); i++)
     {
         node* head = graph[i];
-        while (head->next)
+        while (head->next != nullptr)
         {
             node* next = head->next;
             delete head;
