@@ -45,9 +45,11 @@ int main(int argc, char* argv[1])
     // displays img with detected lines
     cv::namedWindow("detected lines", cv::WINDOW_AUTOSIZE);
     cv::imshow("detected lines", lineImg);
-    int size = lines.size();
+
+    double total = lines.size();
     eliminateOutliers(lines);
-    printf("%d %d\n", size, lines.size());
+    double confidence = lines.size() / total;
+    std::cout << "confidence: " << confidence  << std::endl;
 
     cv::Mat lineImg2;
     cv::cvtColor(img, lineImg2, cv::COLOR_GRAY2BGR);

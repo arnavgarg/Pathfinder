@@ -1,5 +1,6 @@
 #include <vector>
 #include <cstdio>
+#include <cmath>
 
 #include <opencv2/core.hpp>
 
@@ -13,11 +14,12 @@ public:
     node(int line) : line(line) {}
 };
 
+bool closeEnough(cv::Vec4i l1, cv::Vec4i l2);
 bool intersects(cv::Vec4i l1, cv::Vec4i l2);
 int orientation(int x1, int y1, int x2, int y2, int x3, int y3);
 void addEdge(std::vector<node*> &graph, int i, int j);
 void floodfill(std::vector<node*> &graph, int line, bool visited[], int group);
-void dealocgraph(std::vector<node*> &graph);
+void dealocGraph(std::vector<node*> &graph);
 
 /*
  * given a vector of lines, remove all lines that are not part of the biggest "clump"
@@ -29,13 +31,14 @@ void eliminateOutliers(std::vector<cv::Vec4i> &lines)
     for (int i = 0; i < graph.size(); i++)
         graph[i] = new node(i);
 
-    // adds an edge between ever pair of lines that intersect
+    // adds an edge between every pair of lines that intersect
+    // or has points that are close enough
     for (int i = 0; i < lines.size(); i++)
         for (int j = i+1; j < lines.size(); j++)
-            if (intersects(lines[i], lines[j]))
+            if (intersects(lines[i], lines[j]) || closeEnough(lines[i], lines[j]))
                 addEdge(graph, i, j);
 
-    // uses a floodfill to divide the graph into groups
+    // uses a floodfill to divide the graph into groups of connected vertices
     bool visited[graph.size()];
     for (int i = 0; i < graph.size(); i++)
         visited[i] = false;
@@ -57,19 +60,13 @@ void eliminateOutliers(std::vector<cv::Vec4i> &lines)
         if (groups[i] > groups[max])
             max = i;
 
-    for (int i = 0; i < group; i++)
-        printf("%d %d\n", i, groups[i]);
-    printf("\n\n\n");
-    for (int i = 0; i < graph.size(); i++)
-        printf("%d %d\n", graph[i]->line, graph[i]->group);
-    printf("%d\n", max);
 //     erases all lines that are not part of biggest group
     for (int i = graph.size()-1; i >= 0; i--)
         if (graph[i]->group != max)
             lines.erase(lines.begin() + i);
 
     // deallocate graph memory
-    dealocgraph(graph);
+    dealocGraph(graph);
 }
 
 /*
@@ -86,6 +83,18 @@ void addEdge(std::vector<node*> &graph, int i, int j)
     while (jnode->next != nullptr)
         jnode = jnode->next;
     jnode->next = new node(i);
+}
+
+/*
+ * checks if 2 line's points are close enough to have an edge
+ */
+bool closeEnough(cv::Vec4i l1, cv::Vec4i l2)
+{
+    double d1 = sqrt(pow(l1[0]-l2[0], 2) + pow(l1[1]-l2[1], 2));
+    double d2 = sqrt(pow(l1[0]-l2[2], 2) + pow(l1[1]-l2[4], 2));
+    double d3 = sqrt(pow(l1[2]-l2[0], 2) + pow(l1[3]-l2[1], 2));
+    double d4 = sqrt(pow(l1[2]-l2[2], 2) + pow(l1[3]-l2[3], 2));
+    return d1 < 5 || d2 < 5 || d3 < 5 || d4 < 5;
 }
 
 /*
@@ -114,6 +123,9 @@ int orientation(int x1, int y1, int x2, int y2, int x3, int y3)
     return slope1 > slope2 ? 1 : 2;
 }
 
+/*
+ * finds all connected vertices
+ */
 void floodfill(std::vector<node*> &graph, int line, bool visited[], int group)
 {
     if (visited[line])
@@ -130,9 +142,9 @@ void floodfill(std::vector<node*> &graph, int line, bool visited[], int group)
 }
 
 /*
- * dealocated all memory in graph
+ * dealocates all memory in graph
  */
-void dealocgraph(std::vector<node*> &graph)
+void dealocGraph(std::vector<node*> &graph)
 {
     for (int i = 0; i < graph.size(); i++)
     {
