@@ -14,12 +14,13 @@ int main(int argc, char* argv[1])
         std::cout << "usage: gate.out <image_path>\n" << std::endl;
         return -1;
     }
-    cv::Mat img = cv::imread(argv[1], cv::IMREAD_COLOR);
-    if (!img.data)
+    cv::Mat src = cv::imread(argv[1], cv::IMREAD_COLOR);
+    if (!src.data)
     {
         std::cout << "no image data found\n" << std::endl;
         return -1;
     }
+    cv::Mat img = src.clone();
 
     // runs thresholding on the image to isolate orange
     cv::inRange(img, cv::Scalar(115, 170, 240), cv::Scalar(190, 255, 255), img);
@@ -49,16 +50,9 @@ int main(int argc, char* argv[1])
     }
     cv::Point middle = cv::Point((maxx+minx)/2, (maxy+miny)/2);
 
-    cv::Mat lineimg;
-    cv::cvtColor(img, lineimg, CV_GRAY2BGR);
-    for (int i = 0; i < lines.size(); i++)
-    {
-        cv::Vec4i l = lines[i];
-        cv::line(lineimg, cv::Point(l[0],l[1]), cv::Point(l[2], l[3]), cv::Scalar(0,0,255), 2, CV_AA);
-    }
-    cv::circle(lineimg, middle, 4, cv::Scalar(255,0,0),-1);
+    cv::circle(src, middle, 4, cv::Scalar(255,0,0),-1);
     cv::namedWindow("path", CV_WINDOW_AUTOSIZE);
-    cv::imshow("path", lineimg);
+    cv::imshow("path", src);
 
     // outputs
     std::cout << "path center: (" << middle.x << ", " << middle.y << ")" << std::endl;
