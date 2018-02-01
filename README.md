@@ -1,4 +1,4 @@
-# zigzag
+# Pathfinder
 
 ### Usage
 1. `cd` into directory
